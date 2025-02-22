@@ -1,105 +1,146 @@
-#include <stdio.h>
-#include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "nvs_flash.h"
-#include "esp_log.h"
-#include "esp_netif.h"
+#include "Z_index_html.h"
+#include "Z_define.h"
+#include "gpio_config.h"
+#include "wifi_config.h"
 #include "esp_http_server.h"
-#include "esp_mac.h"
-#include "esp_wifi_types.h"
-#include "lwip/ip_addr.h"
-#include "esp_spiffs.h"  // 添加 SPIFFS 头文件
+#include "esp_log.h"
+#include <string.h>
 
-#define WIFI_SSID "IOP"
-#define WIFI_PASS "18936531012"
+static const char *TAG = "ESP32-WEB";
+static httpd_handle_t server = NULL;
+static httpd_req_t *ws_client = NULL;
 
-static const char *TAG = "ESP32-SPIFFS";
+// ✅ WebSocket 发送 JSON 状态
+void ws_send_status() {
+    if (ws_client) {
+        char buffer[128];
+        snprintf(buffer, sizeof(buffer),
+                 "{\"power\": %s, \"disk\": %s}",
+                 get_gpio_state(GPIO_PWR_LED) ? "true" : "false",
+                 get_gpio_state(GPIO_DISK_RESET) ? "true" : "false");
 
-// 初始化 SPIFFS
-void init_spiffs() {
-    ESP_LOGI(TAG, "Initializing SPIFFS");
+        // 按字段声明顺序进行初始化
+        httpd_ws_frame_t ws_frame = {};
+        ws_frame.type = HTTPD_WS_TYPE_TEXT;   // 第1个字段: type
+        ws_frame.final = true;                // 第2个字段: final
+        ws_frame.fragmented = false;          // 第3个字段: fragmented
+        ws_frame.payload = (uint8_t *)buffer; // 第4个字段: payload
+        ws_frame.len = strlen(buffer);        // 第5个字段: len
 
-    esp_vfs_spiffs_conf_t conf = {
-        .base_path = "/spiffs",
-        .partition_label = NULL,
-        .max_files = 5,
-        .format_if_mount_failed = true
-    };
-
-    ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
-    ESP_LOGI(TAG, "SPIFFS mounted successfully");
+        httpd_ws_send_frame(ws_client, &ws_frame);
+    }
 }
 
-// 读取 SPIFFS 中的 index.html 文件
-esp_err_t http_get_handler(httpd_req_t *req) {
-    char path[64] = "/spiffs/index.html";  // SPIFFS 目录
-    FILE *file = fopen(path, "r");
-    if (!file) {
-        ESP_LOGE(TAG, "Failed to open file: %s", path);
-        httpd_resp_send_404(req);
-        return ESP_FAIL;
+// ✅ WebSocket 事件处理器
+esp_err_t ws_handler(httpd_req_t *req) {
+    if (req->method == HTTP_GET) {
+        ws_client = req;
+        ESP_LOGI(TAG, "WebSocket client connected");
     }
-
-    char buffer[1024];
-    size_t read_bytes = fread(buffer, 1, sizeof(buffer), file);
-    fclose(file);
-
-    httpd_resp_set_type(req, "text/html");
-    httpd_resp_send(req, buffer, read_bytes);
     return ESP_OK;
 }
 
-// 配置 HTTP 服务器
-httpd_uri_t uri_get = {
-    .uri = "/",
-    .method = HTTP_GET,
-    .handler = http_get_handler,
-    .user_ctx = NULL
-};
+// ✅ HTTP 服务器处理 GET 请求
+esp_err_t http_get_handler(httpd_req_t *req) {
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, index_html, strlen(index_html));
+    return ESP_OK;
+}
 
-// 启动 HTTP 服务器
+// ✅ HTTP 服务器处理 Power Switch
+esp_err_t power_switch_handler(httpd_req_t *req) {
+    ESP_LOGI(TAG, "Power Switch Triggered");
+    gpio_set_high_and_low(GPIO_POWER);
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, "{\"power\": true}", strlen("{\"power\": true}"));
+    return ESP_OK;
+}
+
+// ✅ HTTP 服务器处理 Reset
+esp_err_t reset_handler(httpd_req_t *req) {
+    ESP_LOGI(TAG, "Reset Triggered");
+    gpio_set_high_and_low(GPIO_RESET);
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, "{\"reset\": true}", strlen("{\"reset\": true}"));
+    return ESP_OK;
+}
+
+// ✅ 启动 HTTP 服务器
 void start_webserver(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    httpd_handle_t server = NULL;
+
     if (httpd_start(&server, &config) == ESP_OK) {
+        ESP_LOGI(TAG, "🌐 HTTP Server Started");
+
+        static httpd_uri_t uri_get = {
+            .uri = "/",
+            .method = HTTP_GET,
+            .handler = http_get_handler,
+            .user_ctx = NULL,
+            .is_websocket = false,
+            .handle_ws_control_frames = false,
+            .supported_subprotocol = NULL
+        };
         httpd_register_uri_handler(server, &uri_get);
-        ESP_LOGI(TAG, "HTTP Server Started");
+
+        static httpd_uri_t uri_toggle_power = {
+            .uri = "/toggle_power",
+            .method = HTTP_POST,
+            .handler = power_switch_handler,
+            .user_ctx = NULL,
+            .is_websocket = false,
+            .handle_ws_control_frames = false,
+            .supported_subprotocol = NULL
+        };
+        httpd_register_uri_handler(server, &uri_toggle_power);
+
+        static httpd_uri_t uri_reset = {
+            .uri = "/reset",
+            .method = HTTP_POST,
+            .handler = reset_handler,
+            .user_ctx = NULL,
+            .is_websocket = false,
+            .handle_ws_control_frames = false,
+            .supported_subprotocol = NULL
+        };
+        httpd_register_uri_handler(server, &uri_reset);
+
+        static httpd_uri_t uri_ws = {
+            .uri = "/ws",
+            .method = HTTP_GET,
+            .handler = ws_handler,
+            .user_ctx = NULL,
+            .is_websocket = true,
+            .handle_ws_control_frames = false,
+            .supported_subprotocol = NULL
+        };
+        httpd_register_uri_handler(server, &uri_ws);
+
+        ESP_LOGI(TAG, "✅ All URI handlers registered");
+    } else {
+        ESP_LOGE(TAG, "❌ Failed to start HTTP Server");
     }
 }
 
-// 连接 WiFi (STA 模式)
-void wifi_init_sta(void) {
-    ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    wifi_config_t wifi_config;
-    memset(&wifi_config, 0, sizeof(wifi_config));
-    strcpy((char *)wifi_config.sta.ssid, WIFI_SSID);
-    strcpy((char *)wifi_config.sta.password, WIFI_PASS);
-
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));  // 设为 STA 模式
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));  // 配置 WiFi
-    ESP_ERROR_CHECK(esp_wifi_start());  // 启动 WiFi
-
-    ESP_LOGI(TAG, "WiFi Connected to SSID: %s", WIFI_SSID);
+// ✅ WebSocket 状态轮询任务
+void ws_status_task(void *arg) {
+    while (1) {
+        ws_send_status();
+        vTaskDelay(pdMS_TO_TICKS(100)); // 每 100ms 发送一次状态
+    }
 }
 
-// `app_main()` 入口
+// ✅ `app_main()` 主函数
 extern "C" void app_main(void) {
     ESP_LOGI(TAG, "=== ESP32 启动 ===");
+
+    gpio_init();
     wifi_init_sta();
-    init_spiffs();  // 初始化 SPIFFS
     start_webserver();
 
+    xTaskCreate(ws_status_task, "ws_status_task", 2048, NULL, 10, NULL);
+
     while (1) {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }
