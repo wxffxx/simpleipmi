@@ -2,7 +2,8 @@
 
 ## Project Title:
 SimpleIPMI (Intelligent Platform Management Interface)
-##A RCOS Project
+
+## A RCOS Project
 
 ## Project Contributors:
 - **Yinxiang Zhao** (zhaoy24@rpi.edu)
