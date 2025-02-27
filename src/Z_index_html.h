@@ -1,7 +1,6 @@
 #ifndef Z_INDEX_HTML_H
 #define Z_INDEX_HTML_H
 
-// 将 index.html 的内容以字符串的形式嵌入到程序中
 const char index_html[] = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -30,8 +29,9 @@ const char index_html[] = R"rawliteral(
             margin: 10px;
             border-radius: 50%;
             background-color: gray; /* 默认关闭状态 */
+            transition: background-color 0.3s;
         }
-        .led-on { background-color: green; } /* 亮起状态 */
+        .led-on { background-color: green; } /* 持续亮起状态 */
         .led-flash {
             animation: flash 0.2s infinite alternate;
         }
@@ -55,6 +55,7 @@ const char index_html[] = R"rawliteral(
         const powerLed = document.getElementById("power_led");
         const diskLed = document.getElementById("disk_led");
 
+        // ✅ 电源开关按钮
         document.getElementById("power_switch").addEventListener("click", function() {
             fetch("/toggle_power", { method: "POST" })
                 .then(response => response.json())
@@ -63,6 +64,7 @@ const char index_html[] = R"rawliteral(
                 });
         });
 
+        // ✅ 重置按钮
         document.getElementById("reset").addEventListener("click", function() {
             fetch("/reset", { method: "POST" })
                 .then(response => response.json())
@@ -71,14 +73,31 @@ const char index_html[] = R"rawliteral(
                 });
         });
 
-        // WebSocket for real-time LED updates
-        const socket = new WebSocket(`ws://${window.location.host}/ws`);
+        // ✅ 状态记录
+        let powerLedState = false;
+        let diskLedState = false;
 
-        socket.onmessage = function(event) {
-            const status = JSON.parse(event.data);
-            powerLed.className = status.power ? "led led-flash" : "led";
-            diskLed.className = status.disk ? "led led-flash" : "led";
-        };
+        // ✅ 定时轮询 LED 状态
+        function fetchStatus() {
+            fetch("/status")
+                .then(response => response.json())
+                .then(data => {
+                    // 如果检测到高电平则亮起，否则保持上一次状态
+                    powerLedState = data.power || powerLedState;
+                    diskLedState = data.disk || diskLedState;
+
+                    powerLed.className = powerLedState ? "led led-on" : "led";
+                    diskLed.className = diskLedState ? "led led-on" : "led";
+
+                    // 如果 500ms 内未检测到高电平则熄灭
+                    if (!data.power) powerLedState = false;
+                    if (!data.disk) diskLedState = false;
+                })
+                .catch(error => console.warn("Status fetch error:", error));
+        }
+
+        // ✅ 每500ms轮询一次状态
+        setInterval(fetchStatus, 500);
     </script>
 </body>
 </html>
