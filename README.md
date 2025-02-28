@@ -4,6 +4,7 @@
 SimpleIPMI (Intelligent Platform Management Interface)
 
 ## A RCOS Project
+https://new.rcos.io/projects/simpleipmi/
 
 ## Project Contributors:
 - **Yinxiang Zhao** (zhaoy24@rpi.edu)
@@ -33,34 +34,18 @@ This project aims to create a budget-friendly device for personal computers and 
 ## Project Proposal:
 We’re building a **low-cost remote management device** using basic components. The first version will focus on the ESP32 microcontroller for essential functions, with plans to add advanced features using ARM-based boards later.
 
-### Goals:
-1. Develop a **basic remote management system** with ESP32 to handle tasks like remote restart, power-on, and LED indicators.
-2. Integrate **IoT functionality** for compatibility with smart home systems.
-3. Transition to **ARM development boards** for advanced features like video capture and input simulation.
-4. Design a **professional final product** with proper PCB design and casing.
-
----
-
-## Project Design:
-### **Version 1 (ESP32)**
-- Basic remote control features like **power on/off** and **LED indicators**.
-- Built using simple wiring and relays.
-
-### **Future Versions:**
-1. Add **simulated mouse/keyboard inputs** and **video capture** with ARM-based boards.
-2. Use **Ubuntu ARM** as the development platform for advanced features.
-3. Replace DIY circuits with **PCB designs** and add **3D-printed protective casing**.
-
----
-
 ## Roadmap:
 
 | Stage | Goals | Timeline |
-|--------|-----------------|----------------------------------------------------------------------------------------|
-|   Stage 1: ESP Basic     | Implement essential features like power on/off, restart, and LED indicators. | Month 1 |
-|   Stage 2: SmartSwitch   | Integrate with IoT systems (HomeKit, MiJia) for smart home connectivity.     | Month 2 |
-|   Stage 3: ARM Upgrade   | Switch to an ARM development board for video capture and input simulation.   | Month 3 |
-|   Stage 4: Final Product | Replace soldering with PCB, refine hardware design with 3D printing.         | Month 4 |
+|--------|-----------------|------------------------------------------------------------------------------------------------|
+|   Stage 1: ESP Basic     | Implement essential features like power on/off, restart, and LED indicators. |  🔄Progressing |
+|                          |  ESP32 power on/off and LED status reading                                   |  ✅Completed   |
+|                          |  Access to HA ecosystem                                                      |  🔄Progressing |
+|                          |  ESP32 OTG input                                                             |  🔄Progressing |
+|   Stage 2: ARM Host      |  an ARM development board for video capture and KVM switch.                  |  📅Planned     |
+|                          |  ARM host KVM                                                                |  📅Planned     |
+|                          |  ARM host web management system                                              |  📅Planned     |
+|   Stage 3: Final Product | Replace soldering with PCB, refine hardware design with 3D printing.         |  📅Planned     |
 
 ---
 
