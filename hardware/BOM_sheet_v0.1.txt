@@ -1,7 +1,0 @@
-1*   ESP32 dev module
-4*   G3VM-61D1(TR)
-1*   BreadBorad
-4*   Resistance(330R)
-2*   Resistance(4.7kR)
-some PinWires
-     
