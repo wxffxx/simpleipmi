@@ -41,12 +41,12 @@ We’re building a **low-cost remote management device** using basic components.
 |   Stage 1: ESP Basic     | Implement essential features like power on/off, restart, and LED indicators. |  🔄Progressing |
 |                          |  ESP32 power on/off and LED status reading                                   |  ✅Completed   |
 |                          |  ESP32 Ethernet                                                              |  ✅Completed   |
-|                          |  Access to HA                                                                |  🔄Progressing |
+|                          |  Access to HA                                                                |  🔄DELAY       |
 |                          |  ESP32 OTG                                                                   |  ✅Completed   |
 |   Stage 2: ARM Host      |  an ARM development board for video capture and KVM switch.                  |  📅Planned     |
 |                          |  ARM host KVM                                                                |  📅Planned     |
-|                          |  ARM host web management system                                              |  📅Planned     |
-|   Stage 3: Final Product | Replace soldering with PCB, refine hardware design with 3D printing.         |  📅Planned     |
+|                          |  ARM host web management system                                              |  ✅Completed   |
+|   Stage 3: Final Product | Replace soldering with PCB, refine hardware design with 3D printing.         |  🔄Progressing |
 
 ---
 
