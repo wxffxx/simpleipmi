@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级管理面板</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>高级管理面板</h1>
+        </header>
+
+        <main>
+            <section class="card">
+                <h2>节点管理</h2>
+                <ul id="node-list" class="node-list">
+                    </ul>
+                <form id="add-node-form" class="add-node-form">
+                    <input type="text" id="node-name" placeholder="节点名称 (e.g., 主力Web服务器)" required>
+                    <input type="text" id="node-address" placeholder="节点地址 (e.g., 192.168.1.10:5001)" required>
+                    <button type="submit">添加节点</button>
+                </form>
+            </section>
+
+            <section class="card">
+                <h2>命令发送</h2>
+                <div class="form-group">
+                    <label for="node-selector">选择一个在线节点:</label>
+                    <select id="node-selector">
+                        <option value="">请先等待节点加载...</option>
+                    </select>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="sendCommand('按钮1被点击')">按钮 1</button>
+                    <button onclick="sendCommand('按钮2被点击')">按钮 2</button>
+                </div>
+            </section>
+        </main>
+        
+        <div id="status-bar" class="status-bar">
+            正在初始化...
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
