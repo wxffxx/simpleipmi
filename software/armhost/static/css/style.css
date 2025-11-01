@@ -1,0 +1,129 @@
+/* static/css/style.css */
+:root {
+    --primary-color: #007bff;
+    --border-color: #ddd;
+    --bg-color: #f8f9fa;
+    --card-bg: #fff;
+    --text-color: #333;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --offline-color: #6c757d;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+header h1 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 30px;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.node-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.node-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.node-item:last-child {
+    border-bottom: none;
+}
+
+.node-info {
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+.status-indicator.online { background-color: var(--success-color); }
+.status-indicator.offline { background-color: var(--error-color); }
+.status-indicator.unknown { background-color: var(--offline-color); }
+
+
+.node-name { font-weight: bold; }
+.node-address { font-size: 0.9em; color: #666; margin-left: 10px; }
+
+.delete-btn {
+    background: var(--error-color);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.add-node-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.add-node-form input {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+button:hover { background-color: #0056b3; }
+
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 5px; }
+select { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+
+.status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    background-color: #333;
+    color: white;
+    font-size: 0.9em;
+}
+.status-bar.success { background-color: var(--success-color); }
+.status-bar.error { background-color: var(--error-color); }
