@@ -38,6 +38,7 @@
       background: var(--bg);
       color: var(--fg);
       font: 15px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      -webkit-font-smoothing: antialiased;
     }
     .container { max-width: 1080px; margin: 0 auto; padding: 24px; }
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -51,45 +52,128 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
     }
-    .card h2 { font-size: 18px; margin: 0 0 12px; }
+    .card h2 { font-size: 18px; margin: 0; }
     .card .body { padding: 18px; }
+    .card .body.scrollable { overflow-y: auto; max-height: 400px; }
     .section-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 
     .form-row { display: grid; gap: 6px; margin-bottom: 12px; }
     label { font-weight: 600; }
-    input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--fg); }
+    input, select { 
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--fg); font-size: 15px; 
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
     input::placeholder { color: var(--muted); }
+    input:focus-visible, select:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 30%, transparent);
+      outline: none;
+    }
     small.help { color: var(--muted); }
 
-    .btn { appearance: none; border: 1px solid var(--border); background: transparent; color: var(--fg); padding: 10px 14px; border-radius: 12px; cursor: pointer; transition: transform .02s ease; }
+    .btn { 
+      appearance: none; border: 1px solid var(--border); background: transparent; color: var(--fg); 
+      padding: 10px 14px; border-radius: 12px; cursor: pointer; 
+      transition: transform .05s ease, background .1s ease; 
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
     .btn:active { transform: translateY(1px); }
     .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
     .btn.success { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
-    .btn.ghost { }
-    .btn.danger { border-color: color-mix(in oklab, var(--danger) 60%, var(--border)); color: var(--danger); }
+    .btn.ghost { border-color: transparent; background: color-mix(in oklab, var(--border) 20%, transparent); }
+    .btn.ghost:hover { background: color-mix(in oklab, var(--border) 40%, transparent); }
+    .btn.danger { border-color: color-mix(in oklab, var(--danger) 60%, transparent); color: var(--danger); background: color-mix(in oklab, var(--danger) 15%, transparent); }
+    .btn.danger:hover { background: color-mix(in oklab, var(--danger) 25%, transparent); }
     .btn[disabled], .btn:disabled { opacity: .6; cursor: not-allowed; }
 
+    .btn-icon { width: 16px; height: 16px; stroke-width: 2.5; }
+    .btn-icon.sm { width: 14px; height: 14px; }
+    .btn.danger .btn-icon { color: var(--danger); }
+    
     .row { display: flex; gap: 10px; align-items: center; }
     .row.wrap { flex-wrap: wrap; }
 
     ul.node-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-    .node-item { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; }
+    .node-item { 
+      display: grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; align-items: center; 
+      transition: background .2s ease;
+    }
     .node-name { font-weight: 700; }
-    .node-addr { color: var(--muted); }
+    .node-addr { color: var(--muted); font-size: 14px; }
+    
+    .node-item.ping-success { 
+      background: color-mix(in oklab, var(--accent-2) 15%, transparent); 
+      border-color: color-mix(in oklab, var(--accent-2) 40%, var(--border));
+    }
+    .node-item.ping-fail { 
+      background: color-mix(in oklab, var(--danger) 15%, transparent); 
+      border-color: color-mix(in oklab, var(--danger) 40%, var(--border));
+    }
+    
+    .node-empty-state {
+      padding: 32px;
+      text-align: center;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+    .node-empty-state h3 { margin: 0 0 4px; color: var(--fg); }
 
     .status-bar {
-      position: sticky; bottom: 0; left: 0; right: 0; margin-top: 16px;
+      position: sticky; bottom: 24px; left: 0; right: 0; margin-top: 16px;
       display: flex; align-items: center; gap: 10px; padding: 10px 14px;
       border: 1px solid var(--border); border-radius: 12px; background: var(--card);
+      box-shadow: var(--shadow);
     }
-    .status-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--muted); }
+    .status-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--muted); transition: background .2s ease; }
     .status-bar[aria-busy="true"] .status-dot { animation: pulse 1s linear infinite; background: var(--accent); }
+    .status-bar.success .status-dot { background: var(--accent-2); }
+    .status-bar.error .status-dot { background: var(--danger); }
 
     @keyframes pulse { 0%{opacity:.4} 50%{opacity:1} 100%{opacity:.4} }
+    
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    dialog.toast { position: fixed; inset: auto 16px 16px auto; border: 1px solid var(--border); background: var(--card); color: var(--fg); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); }
-    dialog.toast[open] { display: grid; gap: 6px; }
+    dialog.toast { 
+      position: fixed; 
+      inset: auto 16px 16px auto; 
+      border: 1px solid var(--border); 
+      background: var(--card); 
+      color: var(--fg); 
+      border-radius: 12px; 
+      padding: 12px 16px; 
+      box-shadow: var(--shadow); 
+      margin: 0;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .2s ease, transform .2s ease;
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+    }
+    dialog.toast[open] { 
+      opacity: 1; 
+      transform: translateY(0);
+    }
+    dialog.toast::backdrop { background: none; }
+    dialog.toast.error { color: var(--danger); }
+    dialog.toast.success { color: var(--accent-2); }
+    dialog.toast .toast-icon { width: 18px; height: 18px; stroke-width: 2.5; flex-shrink: 0; }
 
     .error { color: var(--danger); font-weight: 600; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -100,12 +184,312 @@
     <header>
       <h1>高级管理面板</h1>
       <div class="row">
-        <button type="button" class="btn ghost" id="exportBtn" aria-label="导出节点配置">导出配置</button>
-        <button type="button" class="btn ghost" id="importBtn" aria-label="导入节点配置">导入配置</button>
+        <button type="button" class="btn ghost" id="exportBtn" aria-label="导出节点配置">
+          <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          导出配置
+        </button>
+        <button type="button" class="btn ghost" id="importBtn" aria-label="导入节点配置">
+          <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          导入配置
+        </button>
         <input class="sr-only" type="file" id="importFile" accept="application/json" />
       </div>
     </header>
 
     <main class="grid" id="main" aria-live="polite">
-      <!-- 节点管理 -->
-      <section c
+      <section class="card" id="node-management">
+        <div class="section-head">
+          <h2>节点管理</h2>
+          <span id="nodeCount" class="muted">0 个节点</span>
+        </div>
+        <div class="body scrollable">
+          <ul class="node-list" id="nodesList">
+          </ul>
+        </div>
+      </section>
+
+      <section class="card" id="add-node">
+        <div class="section-head">
+          <h2>添加新节点</h2>
+        </div>
+        <form class="body" id="addNodeForm">
+          <div class="form-row">
+            <label for="nodeName">节点名称</label>
+            <input type="text" id="nodeName" name="nodeName" placeholder="例如：主服务器" required />
+          </div>
+          <div class="form-row">
+            <label for="nodeAddr">节点地址 (ID)</label>
+            <input type="text" id="nodeAddr" name="nodeAddr" placeholder="例如：192.168.1.100:8080" required />
+            <small class="help">这将作为节点的唯一标识符。</small>
+          </div>
+          <div class="form-row" style="margin-top: 16px;">
+            <button type="submit" class="btn primary">添加节点</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <div class="status-bar" id="statusBar" aria-busy="false" role="status">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">准备就绪</span>
+    </div>
+
+  </div>
+
+  <dialog class="toast" id="toast"></dialog>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const nodesList = document.getElementById('nodesList');
+      const addNodeForm = document.getElementById('addNodeForm');
+      const nodeNameInput = document.getElementById('nodeName');
+      const nodeAddrInput = document.getElementById('nodeAddr');
+      const nodeCount = document.getElementById('nodeCount');
+      
+      const statusBar = document.getElementById('statusBar');
+      const statusText = document.getElementById('statusText');
+      const toast = document.getElementById('toast');
+
+      const exportBtn = document.getElementById('exportBtn');
+      const importBtn = document.getElementById('importBtn');
+      const importFile = document.getElementById('importFile');
+
+      let nodes = [];
+      let toastTimer = null;
+      
+      const ICONS = {
+        ping: '<svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><path d="M10.6 13.4c-1.2-1.2-1.2-3.1 0-4.2"/><path d="M13.4 10.6c1.2-1.2 3.1-1.2 4.2 0"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>',
+        trash: '<svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>',
+        spinner: '<span class="spinner"></span>',
+        toastSuccess: '<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        toastError: '<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        toastInfo: '<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+      };
+
+      function renderNodes() {
+        nodesList.innerHTML = '';
+        if (nodes.length === 0) {
+          nodesList.innerHTML = `
+            <li class="node-empty-state">
+              <h3>列表为空</h3>
+              <p>请从右侧表单添加一个新节点。</p>
+            </li>`;
+        }
+        
+        nodes.forEach(node => {
+          const li = document.createElement('li');
+          li.className = 'node-item';
+          li.dataset.addr = node.addr;
+
+          li.innerHTML = `
+            <div>
+              <div class="node-name">${node.name}</div>
+              <div class="node-addr">${node.addr}</div>
+            </div>
+            <button type="button" class="btn ghost ping-btn" aria-label="Ping ${node.name}">
+              ${ICONS.ping}
+            </button>
+            <button type="button" class="btn danger delete-btn" aria-label="删除 ${node.name}">
+              ${ICONS.trash}
+            </button>
+          `;
+          nodesList.appendChild(li);
+        });
+        
+        nodeCount.textContent = `${nodes.length} 个节点`;
+      }
+
+      function addNode(name, addr) {
+        if (nodes.some(n => n.addr === addr)) {
+          showToast(`错误：节点地址 "${addr}" 已存在。`, 'error');
+          return;
+        }
+        nodes.push({ name, addr });
+        saveNodes();
+        renderNodes();
+        showToast(`节点 "${name}" 添加成功。`, 'success');
+        setStatusBar('准备就绪');
+      }
+
+      function deleteNode(addr) {
+        const node = nodes.find(n => n.addr === addr);
+        if (node) {
+          nodes = nodes.filter(n => n.addr !== addr);
+          saveNodes();
+          renderNodes();
+          showToast(`节点 "${node.name}" 已删除。`);
+        }
+      }
+
+      function pingNode(addr, btn) {
+        const node = nodes.find(n => n.addr === addr);
+        if (!node) return;
+        
+        const nodeItem = btn.closest('.node-item');
+
+        btn.disabled = true;
+        btn.innerHTML = ICONS.spinner;
+        setStatusBar(`正在 Ping ${node.name} (${addr})...`, 'busy');
+        
+        setTimeout(() => {
+          const success = Math.random() > 0.3;
+          
+          if (success) {
+            setStatusBar(`Ping ${node.name} 成功！`, 'success');
+          } else {
+            setStatusBar(`Ping ${node.name} 失败。`, 'error');
+            showToast(`无法连接到节点 ${node.name}`, 'error');
+          }
+          
+          nodeItem.classList.add(success ? 'ping-success' : 'ping-fail');
+          
+          btn.disabled = false;
+          btn.innerHTML = ICONS.ping;
+          
+          setTimeout(() => {
+            nodeItem.classList.remove('ping-success', 'ping-fail');
+          }, 2000);
+
+        }, 1500 + Math.random() * 1000);
+      }
+
+      function setStatusBar(text, state = 'idle') {
+        statusText.textContent = text;
+        statusBar.setAttribute('aria-busy', state === 'busy');
+        statusBar.className = 'status-bar';
+        if (state === 'success' || state === 'error') {
+          statusBar.classList.add(state);
+        }
+      }
+
+      function showToast(message, type = 'info') {
+        clearTimeout(toastTimer);
+        
+        let icon;
+        switch(type) {
+          case 'success': icon = ICONS.toastSuccess; break;
+          case 'error': icon = ICONS.toastError; break;
+          default: icon = ICONS.toastInfo;
+        }
+        
+        toast.innerHTML = `${icon} <span>${message}</span>`;
+        toast.className = 'toast';
+        if (type !== 'info') {
+          toast.classList.add(type);
+        }
+        
+        toast.show();
+        
+        toastTimer = setTimeout(() => {
+          toast.close();
+        }, 3000);
+      }
+
+      function saveNodes() {
+        localStorage.setItem('adminPanelNodes', JSON.stringify(nodes));
+      }
+
+      function loadNodes() {
+        const nodesJson = localStorage.getItem('adminPanelNodes');
+        if (nodesJson) {
+          try {
+             nodes = JSON.parse(nodesJson);
+          } catch(e) {
+            console.error("无法解析本地存储中的节点:", e);
+            nodes = [];
+          }
+        }
+      }
+
+      function exportConfig() {
+        if (nodes.length === 0) {
+          showToast('没有可导出的节点。', 'error');
+          return;
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(nodes, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", `admin_panel_config_${new Date().toISOString().split('T')[0]}.json`);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+        showToast('配置已导出。', 'success');
+      }
+
+      function importConfig(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedNodes = JSON.parse(e.target.result);
+            if (Array.isArray(importedNodes) && importedNodes.every(n => n.name && n.addr)) {
+              const existingAddrs = new Set(nodes.map(n => n.addr));
+              let addedCount = 0;
+              importedNodes.forEach(newNode => {
+                if (!existingAddrs.has(newNode.addr)) {
+                  nodes.push(newNode);
+                  addedCount++;
+                }
+              });
+              
+              saveNodes();
+              renderNodes();
+              showToast(`成功导入 ${importedNodes.length} 个节点，新增 ${addedCount} 个。`, 'success');
+              setStatusBar('配置已导入');
+            } else {
+              showToast('文件格式无效。', 'error');
+            }
+          } catch (err) {
+            showToast(`导入失败: ${err.message}`, 'error');
+          }
+          importFile.value = null;
+        };
+        reader.readAsText(file);
+      }
+
+      addNodeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = nodeNameInput.value.trim();
+        const addr = nodeAddrInput.value.trim();
+        if (name && addr) {
+          addNode(name, addr);
+          addNodeForm.reset();
+          nodeNameInput.focus();
+        }
+      });
+
+      nodesList.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        const li = target.closest('li');
+        if (!li) return;
+        
+        const addr = li.dataset.addr;
+
+        if (target.classList.contains('delete-btn')) {
+          if (confirm(`确定要删除节点 "${addr}" 吗？`)) {
+            deleteNode(addr);
+          }
+        } else if (target.classList.contains('ping-btn')) {
+          pingNode(addr, target);
+        }
+      });
+
+      exportBtn.addEventListener('click', exportConfig);
+      importBtn.addEventListener('click', () => importFile.click());
+      importFile.addEventListener('change', importConfig);
+
+      function init() {
+        loadNodes();
+        renderNodes();
+        setStatusBar('系统已加载');
+      }
+
+      init();
+    });
+  </script>
+</body>
+</html>
