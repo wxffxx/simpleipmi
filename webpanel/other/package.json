@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "child_process": "^1.0.2",
-    "express": "^4.21.2",
-    "wrtc": "^0.4.7",
-    "ws": "^8.18.1"
-  }
-}
