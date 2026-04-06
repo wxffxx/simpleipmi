@@ -18,29 +18,63 @@ Open-source, low-cost KVM-over-IP solution. Remotely control physical machines �
 
 The project supports three distinct host architectures:
 
+### MCU Host — ESP32-S3 (Available)
+
+Lightweight standalone solution. The ESP32-S3 handles everything in a single chip: WiFi AP (or Ethernet via optional W5500), web server (SPIFFS), and native USB HID. No Linux, no capture card — minimal BOM, single-host control.
+
+```
+                          ┌─────────────────────────────────────────┐
+                          │            ESP32-S3                     │
+                          │                                         │
+User ── WiFi AP ─────────→│  AsyncWebServer + WebSocket (SPIFFS)   │
+  or                      │         │              │                │
+User ── W5500 Ethernet* ─→│    GPIO Control    USB HID (OTG)       │
+         (optional)       │     ┌────┴────┐    ┌───┴────┐          │
+                          │     │Optocoupler│   │Keyboard│          │
+                          │     │PWR  │ RST │   │ Mouse  │          │
+                          │     └──┬──┴──┬──┘   └───┬────┘          │
+                          └────────┼─────┼──────────┼───────────────┘
+                                   │     │          │
+                              PWR_BTN RST_BTN    USB ──→ Target Machine
+
+* W5500 SPI Ethernet is optional. Without it, the ESP32-S3 operates
+  as a WiFi AP at 192.168.4.1. With W5500, it joins the LAN via DHCP.
+```
+
 ### ARM Linux Host (Available)
 
-Full-featured KVM solution based on ARM Linux SBCs (CM4, OrangePi). The SBC runs a Python (FastAPI) server, captures video via USB capture card, and controls the target machine's keyboard/mouse through an ESP32-S3 HID bridge or native USB OTG.
+Full-featured KVM solution based on ARM Linux SBCs (CM4, OrangePi). The SBC runs a Python (FastAPI) server with modular subsystems for video, HID, power, terminal, and firmware management.
+
+Two HID modes are supported: UART serial bridge to an external ESP32-S3 (CM4 variant), or native USB OTG gadget (OrangePi variant).
 
 ```
-User (Browser)
-     │
-     ▼
-┌──────────────────────────┐
-│  ARM Linux SBC           │
-│  FastAPI Server           │
-│  ┌────────┐ ┌──────────┐ │
-│  │ Video  │ │ HID Mgr  │ │
-│  │(USB Cap)│ │(ESP32/OTG)│ │
-│  └────┬───┘ └────┬─────┘ │
-└───────┼──────────┼────────┘
-        │          │
-   HDMI-in    USB HID out ──→ Target Machine
+                     ┌──────────────────────────────────────────────────┐
+                     │               ARM Linux SBC                     │
+                     │          FastAPI + WebSocket Server              │
+                     │                                                  │
+User (Browser) ─────→│  ┌───────────┐ ┌───────────┐ ┌──────────────┐  │
+   Ethernet/WiFi     │  │  Video    │ │  HID Mgr  │ │  GPIO Ctrl   │  │
+                     │  │  Capture  │ │           │ │              │  │
+                     │  │ (OpenCV)  │ │ Mode A:   │ │  PWR_BTN     │  │
+                     │  │           │ │  UART ──────────→ ESP32-S3  │  │
+                     │  │           │ │  (serial   │ │  RST_BTN     │  │
+                     │  │           │ │  protocol) │ │  12V Detect  │  │
+                     │  │           │ │           │ │              │  │
+                     │  │           │ │ Mode B:   │ └──────┬───────┘  │
+                     │  │           │ │  USB OTG  │        │          │
+                     │  │           │ │ (/dev/hidg)│        │          │
+                     │  └─────┬─────┘ └─────┬─────┘        │          │
+                     │  ┌─────┴─────┐ ┌─────┴─────┐        │          │
+                     │  │ Terminal  │ │ ESP32 OTA │        │          │
+                     │  │ (pty/ssh) │ │ Flasher   │        │          │
+                     │  └───────────┘ └───────────┘        │          │
+                     └────────┼───────────┼────────────────┼──────────┘
+                              │           │                │
+                         USB Capture   USB HID       Optocoupler/Relay
+                         (MS2109)    (KB + Mouse)    (PWR / RST / 12V)
+                              │           │                │
+                         HDMI out ←── Target Machine ──→ Motherboard
 ```
-
-### MCU Host (WIP)
-
-Lightweight standalone solution based on ESP32-S3 or STM32. The MCU handles WiFi AP, web server (SPIFFS), and USB HID natively. No Linux, no capture card — minimal cost, single-host only.
 
 ### Composite Host (WIP)
 
@@ -74,15 +108,15 @@ simpleipmi/
 
 ## Host Platform Comparison
 
-| | ARM CM4 | OrangePi CM4 | ESP32-S3 | STM32F103 |
+| | ESP32-S3 | ARM CM4 | OrangePi CM4 | STM32F103 |
 |---|---|---|---|---|
-| **Architecture** | ARM Linux | ARM Linux | MCU | MCU |
+| **Architecture** | MCU | ARM Linux | ARM Linux | MCU |
 | **Cost** | TBD | TBD | TBD | TBD |
-| **Video Capture** | USB capture card | USB capture card | External only | None |
-| **HID** | ESP32-S3 serial bridge | Native USB OTG | Native USB OTG | Native USB |
-| **Networking** | Ethernet / WiFi | Ethernet / WiFi | WiFi AP | External |
-| **Web Panel** | FastAPI server | FastAPI server | Built-in (SPIFFS) | None |
-| **Status** | Available | Available | WIP | WIP |
+| **Video Capture** | None | USB capture card | USB capture card | None |
+| **HID** | Native USB OTG | ESP32-S3 serial bridge | Native USB OTG | Native USB |
+| **Networking** | WiFi AP / W5500 Ethernet | Ethernet / WiFi | Ethernet / WiFi | External |
+| **Web Panel** | Built-in (SPIFFS) | FastAPI server | FastAPI server | None |
+| **Status** | Available | Available | Available | WIP |
 
 ## Quick Start
 
@@ -119,12 +153,12 @@ See [hardware/README.md](hardware/README.md)
 ## Roadmap
 
 **Completed**
+- ESP32-S3 standalone MCU host (WiFi AP + optional W5500 Ethernet)
 - ARM CM4 KVM host with ESP32-S3 HID bridge
 - OrangePi CM4 KVM host with native USB OTG
 - Web dashboard (KVM view, terminal, system info)
 
 **TODO**
-- ESP32-S3 standalone MCU host
 - STM32F103 low-cost MCU host
 - Composite multi-host management system
 - H616 coreboard completion
