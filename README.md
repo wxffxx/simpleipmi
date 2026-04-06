@@ -1,160 +1,138 @@
 # SI BMC — SimpleIPMI Baseboard Management Controller
 
-<p align="center">
-  <strong>开源 · 低成本 · 多平台 KVM-over-IP 解决方案</strong>
-</p>
+**[中文文档](README_CN.md)**
 
----
+An open-source, low-cost KVM-over-IP solution. Remotely control physical machines — keyboard, mouse, video, and power — through a web browser, similar to commercial IPMI/BMC systems.
 
-## 概述
+Supports multiple hardware platforms, from a $5 ESP32-S3 dev board to CM4-class ARM Linux SBCs, covering both single-machine and multi-host management scenarios.
 
-SI BMC (SimpleIPMI) 是一个开源的远程服务器管理项目，提供类似商用 IPMI/BMC 的功能：通过网络远程控制物理主机的键盘、鼠标、视频画面和电源开关。
+## Features
 
-项目支持多种硬件平台，从 ¥30 的 ESP32-S3 开发板到 CM4 级 ARM Linux SBC，覆盖从单机管理到多机集中管控的场景。
+- **Remote Video** — HDMI capture via USB or CSI, streamed as MJPEG
+- **Remote Keyboard & Mouse** — USB HID emulation
+- **Power Control** — Optocoupler/relay-isolated power, reset, and force-off
+- **Web Dashboard** — Browser-based control panel, zero client installation
+- **Flexible Networking** — WiFi AP direct connect, Ethernet LAN, or Tailscale overlay
 
-### 核心功能
-
-- 🖥️ **远程视频** — HDMI 采集 → MJPEG/H.264 视频流
-- ⌨️ **远程键鼠** — USB HID 键盘 + 鼠标模拟
-- 🔌 **电源控制** — 继电器/光耦隔离的开机、关机、重启
-- 🌐 **Web 管理面板** — 浏览器直接操控，零客户端
-- 📡 **多种接入** — WiFi AP直连 / 有线局域网 / Tailscale 远程
-
----
-
-## 架构
+## Architecture
 
 ```
                         ┌──────────────────────────────────┐
-    用户 (浏览器) ──────→│        Web 管理面板               │
-                        │   视频流 │ HID 输入 │ 电源控制     │
+    User (Browser) ────→│         Web Dashboard             │
+                        │   Video │ HID Input │ Power Ctrl  │
                         └────┬─────┴────┬─────┴────┬────────┘
                              │          │          │
                       ┌──────┴──────────┴──────────┴──────┐
-                      │         KVM Host (主控)            │
-                      │  ESP32-S3 / CM4 / OrangePi / ...  │
+                      │           KVM Host                 │
+                      │  ESP32-S3 / CM4 / OrangePi / ...   │
                       └──┬──────────┬──────────┬──────────┘
                          │          │          │
-                    USB 采集卡   USB HID     GPIO 继电器
-                    (HDMI输入)  (键鼠输出)   (电源控制)
+                   USB Capture   USB HID    GPIO Relay
+                   (HDMI input) (KB+Mouse)  (Power Ctrl)
                          │          │          │
                          └──────────┴──────────┘
-                              被控主机 (Target)
+                             Target Machine
 ```
 
----
-
-## 仓库结构
+## Repository Structure
 
 ```
 simpleipmi/
-├── hosts/                          # 主控设备 (KVM Host 固件/软件)
-│   ├── esphost-esp32s3/            #   ESP32-S3 单片机方案 (WiFi AP + HID)
-│   ├── armhost-cm4/                #   CM4 ARM Linux 方案 (网络 + HID Bridge)
-│   ├── armhost-orangepi4/          #   OrangePi CM4 方案 (USB OTG HID)
-│   ├── stmhost-f103/              #   STM32F103 低成本方案 🚧
-│   └── esphost-esp32c3(switch_only)/ # ESP32-C3 纯开关方案 🚧
+├── hosts/                            # KVM host firmware & software
+│   ├── esphost-esp32s3/              #   ESP32-S3 standalone (WiFi AP + HID)
+│   ├── armhost-cm4/                  #   CM4 ARM Linux (Ethernet + HID Bridge)
+│   ├── armhost-orangepi4/            #   OrangePi CM4 (USB OTG HID)
+│   ├── stmhost-f103/                 #   STM32F103 ultra-low-cost (WIP)
+│   └── esphost-esp32c3(switch_only)/ #   ESP32-C3 power-switch only (WIP)
 │
-├── hardware/                       # 硬件设计文件 (原理图/PCB/BOM)
-│   ├── km/                         #   键鼠模拟模块 (KM)
-│   ├── kvm-carrier/                #   KVM 载板
-│   ├── coreboard/                  #   核心板设计
-│   └── accessories/                #   配件 (视频采集/继电器等)
+├── hardware/                         # PCB / schematic / BOM design files
+│   ├── km/                           #   Keyboard-Mouse HID modules
+│   ├── kvm-carrier/                  #   KVM carrier boards
+│   ├── coreboard/                    #   SoC core modules
+│   └── accessories/                  #   Video capture, relay, etc.
 │
-├── composite/                      # 多机集中管理系统 🚧
-│   └── server/                     #   统一 Web 面板 + 设备调度
+├── composite/                        # Multi-host management system (WIP)
+│   └── server/
 │
-├── shared/                         # 跨设备共享资源
-│   └── protocol/                   #   通信协议定义 (protocol.h)
+├── shared/                           # Cross-device shared resources
+│   └── protocol/                     #   Communication protocol (protocol.h)
 │
-└── docs/                           # 文档资料
+└── docs/                             # Documentation & manuals
 ```
 
-> 🚧 = 开发中 / 占位
-
----
-
-## Host 方案对比
+## Host Platform Comparison
 
 | | ESP32-S3 | ARM CM4 | OrangePi CM4 | STM32F103 |
 |---|---|---|---|---|
-| **成本** | ~¥30 | ~¥200 | ~¥150 | ~¥15 |
-| **视频采集** | ❌ (外接) | ✅ USB 采集卡 | ✅ USB 采集卡 | ❌ |
-| **键鼠 HID** | ✅ 原生 USB OTG | ✅ ESP32-S3 Bridge | ✅ 原生 USB OTG | ✅ 原生 USB |
-| **网络** | WiFi AP | 以太网/WiFi | 以太网/WiFi | 需外接 |
-| **Web 面板** | ✅ 内置 SPIFFS | ✅ FastAPI | ✅ FastAPI | ❌ |
-| **适用场景** | 单机简易管控 | 功能完整的远程 KVM | 功能完整的远程 KVM | 超低成本 HID |
-| **状态** | ✅ 可用 | ✅ 可用 | ✅ 可用 | 🚧 开发中 |
+| **Cost** | ~$5 | ~$30 | ~$20 | ~$2 |
+| **Video Capture** | External only | USB capture card | USB capture card | None |
+| **HID** | Native USB OTG | ESP32-S3 serial bridge | Native USB OTG | Native USB |
+| **Networking** | WiFi AP | Ethernet / WiFi | Ethernet / WiFi | External |
+| **Web Panel** | Built-in (SPIFFS) | FastAPI server | FastAPI server | None |
+| **Use Case** | Simple single-host | Full-featured remote KVM | Full-featured remote KVM | Ultra-low-cost HID |
+| **Status** | Ready | Ready | Ready | WIP |
 
----
+## Quick Start
 
-## 快速开始
+### Option 1: ESP32-S3 (Simplest)
 
-### 方案一：ESP32-S3 (最简单)
-
-**你需要:** ESP32-S3-DevKitC-1 开发板 + 杜邦线 + 光耦模块
+**Requirements:** ESP32-S3-DevKitC-1, jumper wires, optocoupler module
 
 ```bash
-# 1. 安装 PlatformIO
+# Install PlatformIO
 pip install platformio
 
-# 2. 编译烧录
+# Build and flash firmware
 cd hosts/esphost-esp32s3/firmware
 pio run -t upload
 
-# 3. 上传 Web 界面 (SPIFFS)
+# Upload web UI (SPIFFS)
 pio run -t uploadfs
 
-# 4. 连接 WiFi AP: SI-BMC-XXXX，打开 http://192.168.4.1
+# Connect to WiFi AP "SI-BMC-XXXX", open http://192.168.4.1
 ```
 
-详见 → [hosts/esphost-esp32s3/README.md](hosts/esphost-esp32s3/README.md)
+See [hosts/esphost-esp32s3/README.md](hosts/esphost-esp32s3/README.md)
 
-### 方案二：ARM CM4 (功能完整)
+### Option 2: ARM CM4 (Full-Featured)
 
-**你需要:** CM4 兼容 SBC + ESP32-S3 (HID Bridge) + USB 采集卡
+**Requirements:** CM4-compatible SBC, ESP32-S3 (HID bridge), USB capture card
 
 ```bash
-# 1. 在 CM4 上部署
+# Deploy server on CM4
 cd hosts/armhost-cm4/server
 pip install -r requirements.txt
 python main.py
 
-# 2. 烧录 ESP32-S3 HID Bridge 固件
+# Flash ESP32-S3 HID bridge firmware
 cd hosts/armhost-cm4/firmware
 pio run -t upload
 ```
 
-详见 → [hosts/armhost-cm4/docs/DEVELOPMENT.md](hosts/armhost-cm4/docs/DEVELOPMENT.md)
+See [hosts/armhost-cm4/docs/DEVELOPMENT.md](hosts/armhost-cm4/docs/DEVELOPMENT.md)
 
----
+## Hardware Designs
 
-## 硬件设计
+All PCB and schematic files are under `hardware/`, organized by function:
 
-所有 PCB/原理图设计文件在 `hardware/` 目录下，按功能分类：
+| Category | Description |
+|----------|-------------|
+| `km/` | Keyboard-mouse HID modules (ESP32-S2, XIAO-ESP32S3, STM32F103) |
+| `kvm-carrier/` | KVM carrier boards (PCIe CM4 v1/v2, T113) |
+| `coreboard/` | SoC core modules (H616, ARM Linux full-module) |
+| `accessories/` | HDMI capture (Toshiba TC358743, MS2109), relay module |
 
-| 分类 | 说明 | 详情 |
-|------|------|------|
-| `km/` | 键鼠模拟模块 | ESP32-S2, XIAO-ESP32S3, STM32F103 |
-| `kvm-carrier/` | KVM 载板 | PCIe CM4 v1/v2, T113 |
-| `coreboard/` | 核心板 | H616, ARM Linux 全集成 |
-| `accessories/` | 配件 | HDMI 采集 (Toshiba/MS2109), 继电器 |
+See [hardware/README.md](hardware/README.md)
 
-详见 → [hardware/README.md](hardware/README.md)
+## Roadmap
 
----
-
-## 开发路线
-
-- [x] ESP32-S3 单机 KVM Host
-- [x] CM4 ARM Linux KVM Host + ESP32-S3 HID Bridge
-- [x] OrangePi CM4 KVM Host (USB OTG)
-- [x] Web 管理面板 (仪表盘 + KVM + 终端)
-- [ ] STM32F103 低成本 HID Host
-- [ ] Composite 多机管理系统
-- [ ] H616 核心板完成
-
----
+- [x] ESP32-S3 standalone KVM host
+- [x] CM4 ARM Linux KVM host + ESP32-S3 HID bridge
+- [x] OrangePi CM4 KVM host (USB OTG)
+- [x] Web dashboard (KVM view, terminal, system info)
+- [ ] STM32F103 low-cost HID host
+- [ ] Composite multi-host management system
+- [ ] H616 coreboard completion
 
 ## License
 
