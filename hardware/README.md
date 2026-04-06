@@ -1,4 +1,4 @@
-# SI BMC — Hardware Designs
+# SimpleIPMI — Hardware Designs
 
 硬件设计按功能分为 4 大类。
 

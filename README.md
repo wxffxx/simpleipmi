@@ -1,10 +1,10 @@
-# SI BMC — SimpleIPMI Baseboard Management Controller
+# SimpleIPMI
 
-**[中文文档](README_CN.md)**
+**[中文文档](README_zh.md)** 
 
-An open-source, low-cost KVM-over-IP solution. Remotely control physical machines — keyboard, mouse, video, and power — through a web browser, similar to commercial IPMI/BMC systems.
+An [RCOS](https://rcos.io) Project
 
-Supports multiple hardware platforms, from a $5 ESP32-S3 dev board to CM4-class ARM Linux SBCs, covering both single-machine and multi-host management scenarios.
+Open-source, low-cost KVM-over-IP solution. Remotely control physical machines — keyboard, mouse, video, and power — through a web browser, similar to commercial IPMI/BMC systems.
 
 ## Features
 
@@ -16,33 +16,45 @@ Supports multiple hardware platforms, from a $5 ESP32-S3 dev board to CM4-class 
 
 ## Architecture
 
+The project supports three distinct host architectures:
+
+### ARM Linux Host (Available)
+
+Full-featured KVM solution based on ARM Linux SBCs (CM4, OrangePi). The SBC runs a Python (FastAPI) server, captures video via USB capture card, and controls the target machine's keyboard/mouse through an ESP32-S3 HID bridge or native USB OTG.
+
 ```
-                        ┌──────────────────────────────────┐
-    User (Browser) ────→│         Web Dashboard             │
-                        │   Video │ HID Input │ Power Ctrl  │
-                        └────┬─────┴────┬─────┴────┬────────┘
-                             │          │          │
-                      ┌──────┴──────────┴──────────┴──────┐
-                      │           KVM Host                 │
-                      │  ESP32-S3 / CM4 / OrangePi / ...   │
-                      └──┬──────────┬──────────┬──────────┘
-                         │          │          │
-                   USB Capture   USB HID    GPIO Relay
-                   (HDMI input) (KB+Mouse)  (Power Ctrl)
-                         │          │          │
-                         └──────────┴──────────┘
-                             Target Machine
+User (Browser)
+     │
+     ▼
+┌──────────────────────────┐
+│  ARM Linux SBC           │
+│  FastAPI Server           │
+│  ┌────────┐ ┌──────────┐ │
+│  │ Video  │ │ HID Mgr  │ │
+│  │(USB Cap)│ │(ESP32/OTG)│ │
+│  └────┬───┘ └────┬─────┘ │
+└───────┼──────────┼────────┘
+        │          │
+   HDMI-in    USB HID out ──→ Target Machine
 ```
+
+### MCU Host (WIP)
+
+Lightweight standalone solution based on ESP32-S3 or STM32. The MCU handles WiFi AP, web server (SPIFFS), and USB HID natively. No Linux, no capture card — minimal cost, single-host only.
+
+### Composite Host (WIP)
+
+Central management server running on Ubuntu (x86/ARM). Manages multiple KVM hosts and USB capture cards simultaneously, providing a unified web panel for multi-target-machine control.
 
 ## Repository Structure
 
 ```
 simpleipmi/
 ├── hosts/                            # KVM host firmware & software
-│   ├── esphost-esp32s3/              #   ESP32-S3 standalone (WiFi AP + HID)
-│   ├── armhost-cm4/                  #   CM4 ARM Linux (Ethernet + HID Bridge)
-│   ├── armhost-orangepi4/            #   OrangePi CM4 (USB OTG HID)
-│   ├── stmhost-f103/                 #   STM32F103 ultra-low-cost (WIP)
+│   ├── esphost-esp32s3/              #   ESP32-S3 MCU host (WiFi AP + HID)
+│   ├── armhost-cm4/                  #   CM4 ARM Linux host (Ethernet + HID Bridge)
+│   ├── armhost-orangepi4/            #   OrangePi CM4 host (USB OTG HID)
+│   ├── stmhost-f103/                 #   STM32F103 MCU host (WIP)
 │   └── esphost-esp32c3(switch_only)/ #   ESP32-C3 power-switch only (WIP)
 │
 ├── hardware/                         # PCB / schematic / BOM design files
@@ -62,39 +74,19 @@ simpleipmi/
 
 ## Host Platform Comparison
 
-| | ESP32-S3 | ARM CM4 | OrangePi CM4 | STM32F103 |
+| | ARM CM4 | OrangePi CM4 | ESP32-S3 | STM32F103 |
 |---|---|---|---|---|
-| **Cost** | ~$5 | ~$30 | ~$20 | ~$2 |
-| **Video Capture** | External only | USB capture card | USB capture card | None |
-| **HID** | Native USB OTG | ESP32-S3 serial bridge | Native USB OTG | Native USB |
-| **Networking** | WiFi AP | Ethernet / WiFi | Ethernet / WiFi | External |
-| **Web Panel** | Built-in (SPIFFS) | FastAPI server | FastAPI server | None |
-| **Use Case** | Simple single-host | Full-featured remote KVM | Full-featured remote KVM | Ultra-low-cost HID |
-| **Status** | Ready | Ready | Ready | WIP |
+| **Architecture** | ARM Linux | ARM Linux | MCU | MCU |
+| **Cost** | TBD | TBD | TBD | TBD |
+| **Video Capture** | USB capture card | USB capture card | External only | None |
+| **HID** | ESP32-S3 serial bridge | Native USB OTG | Native USB OTG | Native USB |
+| **Networking** | Ethernet / WiFi | Ethernet / WiFi | WiFi AP | External |
+| **Web Panel** | FastAPI server | FastAPI server | Built-in (SPIFFS) | None |
+| **Status** | Available | Available | WIP | WIP |
 
 ## Quick Start
 
-### Option 1: ESP32-S3 (Simplest)
-
-**Requirements:** ESP32-S3-DevKitC-1, jumper wires, optocoupler module
-
-```bash
-# Install PlatformIO
-pip install platformio
-
-# Build and flash firmware
-cd hosts/esphost-esp32s3/firmware
-pio run -t upload
-
-# Upload web UI (SPIFFS)
-pio run -t uploadfs
-
-# Connect to WiFi AP "SI-BMC-XXXX", open http://192.168.4.1
-```
-
-See [hosts/esphost-esp32s3/README.md](hosts/esphost-esp32s3/README.md)
-
-### Option 2: ARM CM4 (Full-Featured)
+### ARM CM4 Host
 
 **Requirements:** CM4-compatible SBC, ESP32-S3 (HID bridge), USB capture card
 
@@ -126,13 +118,20 @@ See [hardware/README.md](hardware/README.md)
 
 ## Roadmap
 
-- [x] ESP32-S3 standalone KVM host
-- [x] CM4 ARM Linux KVM host + ESP32-S3 HID bridge
-- [x] OrangePi CM4 KVM host (USB OTG)
-- [x] Web dashboard (KVM view, terminal, system info)
-- [ ] STM32F103 low-cost HID host
-- [ ] Composite multi-host management system
-- [ ] H616 coreboard completion
+**Completed**
+- ARM CM4 KVM host with ESP32-S3 HID bridge
+- OrangePi CM4 KVM host with native USB OTG
+- Web dashboard (KVM view, terminal, system info)
+
+**TODO**
+- ESP32-S3 standalone MCU host
+- STM32F103 low-cost MCU host
+- Composite multi-host management system
+- H616 coreboard completion
+
+## About RCOS
+
+This project is developed under the [Rensselaer Center for Open Source](https://rcos.io) (RCOS), an organization at Rensselaer Polytechnic Institute that supports student-driven open source software serving the greater good.
 
 ## License
 
