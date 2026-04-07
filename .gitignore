@@ -1,0 +1,36 @@
+# ── Secrets & Runtime Data ──────────────────
+cortex_config.json
+cortex_conversations.json
+*.secret
+*.key
+.env
+.env.*
+
+# ── Python ──────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ── IDE / Editor ────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Build artifacts ─────────────────────────
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+.pio/
