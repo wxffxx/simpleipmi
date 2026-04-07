@@ -96,6 +96,13 @@ simpleipmi/
 │   ├── coreboard/                    #   核心板设计
 │   └── accessories/                  #   配件 (视频采集/继电器等)
 │
+├── cortex/                           # KVM Agent 智能框架 (视觉 + 自动修复)
+│   ├── core/                         #   被动监控 + 半主动执行器
+│   ├── vision/                       #   画面分析 (本地检测 + LLM API)
+│   ├── action/                       #   HID/SSH 操作驱动
+│   ├── skills/                       #   Skill 系统 (YAML + Python)
+│   └── dashboard/                    #   Agent Web 面板
+│
 ├── composite/                        # 多机集中管理系统 (开发中)
 │   └── server/
 │

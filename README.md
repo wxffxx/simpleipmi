@@ -97,6 +97,13 @@ simpleipmi/
 │   ├── coreboard/                    #   SoC core modules
 │   └── accessories/                  #   Video capture, relay, etc.
 │
+├── cortex/                           # KVM Agent framework (vision + auto-remediation)
+│   ├── core/                         #   Passive monitor + semi-active executor
+│   ├── vision/                       #   Screen analysis (local + LLM API)
+│   ├── action/                       #   HID/SSH action driver
+│   ├── skills/                       #   Skill system (YAML + Python)
+│   └── dashboard/                    #   Agent web UI
+│
 ├── composite/                        # Multi-host management system (WIP)
 │   └── server/
 │
