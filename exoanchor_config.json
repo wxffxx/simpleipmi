@@ -1,0 +1,48 @@
+{
+  "mode": "manual",
+  "target": {
+    "ip": "192.168.1.67",
+    "ssh": {
+      "backend": "system",
+      "port": 22,
+      "username": "wxffxx",
+      "password": "123898",
+      "key_file": ""
+    }
+  },
+  "passive": {
+    "poll_interval": 10,
+    "services": {}
+  },
+  "safety": {
+    "max_steps": 200,
+    "max_duration": 600,
+    "require_confirmation": true
+  },
+  "nlp": {
+    "mode": "api",
+    "api_provider": "gemini",
+    "api_key": "AIzaSyD42Ru0wffV6FJYyqg9ju_Byo1ruwi63NY",
+    "model": "gemini-3.1-pro-preview",
+    "endpoint": "",
+    "ollama_url": "http://localhost:11434",
+    "ollama_model": "",
+    "allowed_models": [
+      {
+        "id": "gemini-2.5-flash",
+        "name": "Gemini 2.5 Flash"
+      },
+      {
+        "id": "gemini-2.0-flash",
+        "name": "Gemini 2.0 Flash"
+      },
+      {
+        "id": "gemini-3.1-pro-preview",
+        "name": "Gemini 3.1 Pro Preview"
+      }
+    ]
+  },
+  "vision": {
+    "backend": "local"
+  }
+}
