@@ -22,7 +22,7 @@
   "nlp": {
     "mode": "api",
     "api_provider": "gemini",
-    "api_key": "AIzaSyD42Ru0wffV6FJYyqg9ju_Byo1ruwi63NY",
+    "api_key": "",
     "model": "gemini-3.1-pro-preview",
     "endpoint": "",
     "ollama_url": "http://localhost:11434",
